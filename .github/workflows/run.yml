@@ -1,4 +1,4 @@
-name: Daily Go build & run
+name: Daily build & run
 
 on:
   schedule:
