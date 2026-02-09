@@ -1,0 +1,39 @@
+name: Daily Go build & run
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5 # Updated to v5
+        with:
+          go-version: '1.24.7'
+          cache: true
+
+      - name: Download modules
+        run: go mod download
+
+      - name: Build packages
+        run: go build ./...
+
+      - name: Find and run first main package (5m timeout)
+        shell: bash
+        run: |
+          # Finds the first package named 'main'
+          first_main=$(go list -f '{{if eq .Name "main"}}{{.ImportPath}}{{end}}' ./... | head -n 1)
+          
+          if [ -z "$first_main" ]; then
+            echo "No main package found; skipping run step."
+            exit 0
+          fi
+          
+          echo "Running main package: $first_main (timeout 5m)"
+          timeout 300 go run "$first_main"
