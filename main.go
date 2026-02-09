@@ -38,8 +38,17 @@ func main() {
 	endPhrase := GetRandomFromList(variables.EndPhrases)
 	signature := GetRandomFromList(variables.Signatures)
 
-	message := fmt.Sprintf("%s %s,\n\nThis is your weekly reminder that Kaneel loves you because %s. \n\n%s,\n%s.", salutation, nickname, reason, endPhrase, signature)
-	fmt.Println(message)
+	htmlBody := fmt.Sprintf("<p>%s %s,</p><p>This is your weekly reminder that Kaneel loves you because %s.</p><p>%s,<br>%s.</p> <img src=\"cid:image1\" alt=\"Kaneel loves you\" />", salutation, nickname, reason, endPhrase, signature)
+	fmt.Println(htmlBody)
+
+	imageGenDescription := fmt.Sprintf("Create a picture of a boy and a girl %s in a pixar style art", reason)
+	GenerateImage(imageGenDescription)
+
+	base64Image, err := getFileInBase64("generated_image.png")
+	if err != nil {
+		fmt.Printf("Error reading image file: %v\n", err)
+		base64Image = ""
+	}
 
 	recipients := getRecipients()
 	bcc := getBCC()
@@ -47,5 +56,13 @@ func main() {
 	fmt.Printf("Recipients: %s\n", recipients)
 	fmt.Printf("BCC: %s\n\n", bcc)
 
-	SendEmail(subject, message, recipients, bcc)
+	SendEmail(subject, htmlBody, recipients, bcc, base64Image)
+}
+
+func getFileInBase64(filePath string) (string, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }

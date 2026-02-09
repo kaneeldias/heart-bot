@@ -67,7 +67,7 @@ func getClient(config *oauth2.Config) *http.Client {
 //	json.NewEncoder(f).Encode(token)
 //}
 
-func SendEmail(subject string, body string, recipients []string, bcc []string) {
+func SendEmail(subject string, htmlBody string, recipients []string, bcc []string, base64Image string) {
 	ctx := context.Background()
 
 	config := &oauth2.Config{
@@ -84,15 +84,61 @@ func SendEmail(subject string, body string, recipients []string, bcc []string) {
 		log.Fatalf("Unable to retrieve Gmail client: %v", err)
 	}
 
-	toHeader := strings.Join(recipients, ", ")
-	bccHeader := strings.Join(bcc, ", ")
+	message := makeRawMessageWithInlineImage(subject, htmlBody, recipients, bcc, "generated_image.png")
 
-	var message gmail.Message
-	messageStr := fmt.Sprintf("To: %s\r\nBcc: %s\r\nSubject: %s\r\n\r\n%s", toHeader, bccHeader, subject, body)
-	message.Raw = base64.URLEncoding.EncodeToString([]byte(messageStr))
-
-	_, err = srv.Users.Messages.Send("me", &message).Do()
+	_, err = srv.Users.Messages.Send("me", message).Do()
 	if err != nil {
 		log.Fatalf("Unable to send email: %v", err)
 	}
+}
+
+func makeRawMessageWithInlineImage(subject, htmlBody string, recipients, bcc []string, imageFilePath string) *gmail.Message {
+	to := strings.Join(recipients, ", ")
+	bccHeader := strings.Join(bcc, ", ")
+
+	// Read image file
+	data, err := os.ReadFile(imageFilePath)
+	if err != nil {
+		log.Printf("Unable to read image file: %v", err)
+		data = []byte("")
+	}
+
+	// Detect MIME type from the first up to 512 bytes
+	head := data
+	if len(head) > 512 {
+		head = head[:512]
+	}
+	mimeType := http.DetectContentType(head)
+
+	// Extract filename without adding new imports
+	filename := imageFilePath
+	if idx := strings.LastIndexAny(imageFilePath, "/\\"); idx != -1 {
+		filename = imageFilePath[idx+1:]
+	}
+	if filename == "" {
+		filename = "image"
+	}
+
+	// Base64 encode the image
+	b64Image := base64.StdEncoding.EncodeToString(data)
+
+	boundary := "BOUNDARY_STRING"
+
+	var sb strings.Builder
+	// Headers + multipart/related
+	sb.WriteString(fmt.Sprintf("To: %s\r\nBcc: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: multipart/related; boundary=%s\r\n\r\n", to, bccHeader, subject, boundary))
+
+	// HTML part (refer to image via cid:image1)
+	sb.WriteString(fmt.Sprintf("--%s\r\nContent-Type: text/html; charset=\"UTF-8\"\r\n\r\n%s\r\n\r\n", boundary, htmlBody))
+
+	// Image part (inline, base64)
+	sb.WriteString(fmt.Sprintf("--%s\r\nContent-Type: %s; name=\"%s\"\r\nContent-Transfer-Encoding: base64\r\nContent-ID: <image1>\r\nContent-Disposition: inline; filename=\"%s\"\r\n\r\n%s\r\n", boundary, mimeType, filename, filename, b64Image))
+
+	// end
+	sb.WriteString(fmt.Sprintf("--%s--", boundary))
+
+	raw := base64.URLEncoding.EncodeToString([]byte(sb.String()))
+	raw = strings.TrimRight(raw, "=") // Gmail expects URL-safe base64 without padding
+
+	return &gmail.Message{Raw: raw}
 }
