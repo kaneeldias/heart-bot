@@ -44,5 +44,8 @@ func main() {
 	recipients := getRecipients()
 	bcc := getBCC()
 
+	fmt.Printf("Recipients: %s\n", recipients)
+	fmt.Printf("BCC: %s\n\n", bcc)
+
 	SendEmail(subject, message, recipients, bcc)
 }

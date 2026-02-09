@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -83,8 +84,11 @@ func SendEmail(subject string, body string, recipients []string, bcc []string) {
 		log.Fatalf("Unable to retrieve Gmail client: %v", err)
 	}
 
+	toHeader := strings.Join(recipients, ", ")
+	bccHeader := strings.Join(bcc, ", ")
+
 	var message gmail.Message
-	messageStr := fmt.Sprintf("To: %s\r\nSubject: %s\r\n\r\n%s", recipients[0], subject, body)
+	messageStr := fmt.Sprintf("To: %s\r\nBcc: %s\r\nSubject: %s\r\n\r\n%s", toHeader, bccHeader, subject, body)
 	message.Raw = base64.URLEncoding.EncodeToString([]byte(messageStr))
 
 	_, err = srv.Users.Messages.Send("me", &message).Do()
