@@ -1,8 +1,8 @@
-name: Daily build & run
+name: Weekly build & run
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * 6'
   workflow_dispatch:
 
 jobs:
