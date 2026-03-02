@@ -41,7 +41,7 @@ func main() {
 	htmlBody := fmt.Sprintf("<p>%s %s,</p><p>This is your weekly reminder that Kaneel loves you because %s.</p><p>%s,<br>%s.</p> <img src=\"cid:image1\" alt=\"Kaneel loves you\" />", salutation, nickname, reason, endPhrase, signature)
 	fmt.Println(htmlBody)
 
-	imageGenDescription := fmt.Sprintf("Create a picture of a boy and a girl %s in a pixar style art", reason)
+	imageGenDescription := fmt.Sprintf("Create a picture of a boy and a girl %s in a Zootopia style art", reason)
 	GenerateImage(imageGenDescription)
 
 	base64Image, err := getFileInBase64("generated_image.png")
