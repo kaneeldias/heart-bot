@@ -42,7 +42,7 @@ func main() {
 	htmlBody := fmt.Sprintf("<p>%s %s,</p><p>This is your weekly reminder that Kaneel loves you because %s.</p><p>%s,<br>%s.</p> <img src=\"cid:image1\" alt=\"Kaneel loves you\" />", salutation, nickname, reason, endPhrase, signature)
 	fmt.Println(htmlBody)
 
-	imageGenDescription := fmt.Sprintf("Create a picture of a boy and a girl %s in style that looks like the Zootopia movie.", reason)
+	imageGenDescription := fmt.Sprintf("Create a picture of a boy and a girl (young adults) %s in style that looks like a Pixar movie.", reason)
 	outputPath, err := GenerateImage(imageGenDescription, "generated_image.png")
 	if err != nil {
 		fmt.Printf("Image generation failed: %v\n", err)
